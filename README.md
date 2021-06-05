@@ -1,5 +1,8 @@
 # Image-segmentation-U-net-basic-model-
 
+![image](https://user-images.githubusercontent.com/42764627/120883164-46c86980-c5f9-11eb-802b-1967224ec2ce.png)
+
+
 U-Net model
  The name of this network architecture comes from it's U-like shape when shown in a diagram like this (image from U-net entry on wikipedia):
 
@@ -19,6 +22,9 @@ from keras.optimizers import Adam
 from keras.layers.merge import concatenate
 # Set the image shape to have the channels in the first dimension
 K.set_image_data_format("channels_first")
+
+
+
 The "depth" of your U-Net
 The "depth" of your U-Net is equal to the number of down-convolutions you will use. In the image above, the depth is 4 because there are 4 down-convolutions running down the left side including the very bottom of the U.
 
@@ -35,13 +41,16 @@ num_channels: 4
 height: 160
 width: 160
 length: 16
+
 # Define an input layer tensor of the shape you'll use in the assignment
-input_layer = Input(shape=(4, 160, 160, 16))
+_input_layer = Input(shape=(4, 160, 160, 16))
 input_layer
+
 <tf.Tensor 'input_2:0' shape=(?, 4, 160, 160, 16) dtype=float32>
+
 Notice that the tensor shape has a '?' as the very first dimension. This will be the batch size. So the dimensions of the tensor are: (batch_size, num_channels, height, width, length)
 
-Contracting (downward) path
+**Contracting (downward) path**
 Here you'll start by constructing the downward path in your network (the left side of the U-Net). The (height, width, length) of the input gets smaller as you move down this path, and the number of channels increases.
 
 Depth 0
@@ -67,7 +76,9 @@ down_depth_0_layer_0 = Conv3D(filters=32,
                               strides=(1,1,1)
                               )(input_layer)
 down_depth_0_layer_0
+
 <tf.Tensor 'conv3d_3/add:0' shape=(?, 32, 160, 160, 16) dtype=float32>
+
 Notice that with 32 filters, the result you get above is a tensor with 32 channels.
 
 Run the next cell to add a relu activation to the first convolutional layer
@@ -75,15 +86,20 @@ Run the next cell to add a relu activation to the first convolutional layer
 # Add a relu activation to layer 0 of depth 0
 down_depth_0_layer_0 = Activation('relu')(down_depth_0_layer_0)
 down_depth_0_layer_0
+
 <tf.Tensor 'activation_3/Relu:0' shape=(?, 32, 160, 160, 16) dtype=float32>
+
 Depth 0, Layer 1
 For layer 1 of depth 0, the formula for calculating the number of filters is:
 filtersi=32×(2i)×2
+
 Where i is the current depth.
 
 Notice that the '× 2' at the end of this expression isn't there for layer 0.
 So at depth i=0 for layer 1:
+
 filters0=32×(20)×2=64
+
 # Create a Conv3D layer with 64 filters and add relu activation
 down_depth_0_layer_1 = Conv3D(filters=64, 
                 kernel_size=(3,3,3),
@@ -92,8 +108,10 @@ down_depth_0_layer_1 = Conv3D(filters=64,
                )(down_depth_0_layer_0)
 down_depth_0_layer_1 = Activation('relu')(down_depth_0_layer_1)
 down_depth_0_layer_1
+
 <tf.Tensor 'activation_4/Relu:0' shape=(?, 64, 160, 160, 16) dtype=float32>
-Max pooling
+
+#Max pooling
 Within the U-Net architecture, there is a max pooling operation after each of the down-convolutions (not including the last down-convolution at the bottom of the U). In general, this means you'll add max pooling after each down-convolution up to (but not including) the depth - 1 down-convolution (since you started counting at 0).
 
 For this lab exercise:
@@ -105,7 +123,9 @@ Run the next cell to add a max pooling operation to your U-Net
 
 # Define a max pooling layer
 down_depth_0_layer_pool = MaxPooling3D(pool_size=(2,2,2))(down_depth_0_layer_1)
+
 down_depth_0_layer_pool
+
 <tf.Tensor 'max_pooling3d_1/transpose_1:0' shape=(?, 64, 80, 80, 8) dtype=float32>
 Depth 1, Layer 0
 At depth 1, layer 0, the formula for calculating the number of filters is:
@@ -124,15 +144,19 @@ down_depth_1_layer_0 = Conv3D(filters=64,
                )(down_depth_0_layer_pool)
 down_depth_1_layer_0 = Activation('relu')(down_depth_1_layer_0)
 down_depth_1_layer_0
+
 <tf.Tensor 'activation_5/Relu:0' shape=(?, 64, 80, 80, 8) dtype=float32>
 Depth 1, Layer 1
+
 For layer 1 of depth 1 the formula you'll use for number of filters is:
 filtersi=32×(2i)×2
+
 Where i is the current depth.
 
 Notice that the '×2' at the end of this expression isn't there for layer 0.
 So at depth i=1:
 filters0=32×(21)×2=128
+
 Run the next cell to add another Conv3D with 128 filters to your network.
 
 # Add another Conv3D with 128 filters to your network.
@@ -143,8 +167,10 @@ down_depth_1_layer_1 = Conv3D(filters=128,
                )(down_depth_1_layer_0)
 down_depth_1_layer_1 = Activation('relu')(down_depth_1_layer_1)
 down_depth_1_layer_1
+
 <tf.Tensor 'activation_6/Relu:0' shape=(?, 128, 80, 80, 8) dtype=float32>
 No max pooling at depth 1 (the bottom of the U)
+
 When you get to the "bottom" of the U-net, you don't need to apply max pooling after the convolutions.
 
 Expanding (upward) Path
@@ -160,7 +186,9 @@ Run the next cell to add an upsampling operation to your network. Note that you'
 # Add an upsampling operation to your network
 up_depth_0_layer_0 = UpSampling3D(size=(2,2,2))(down_depth_1_layer_1)
 up_depth_0_layer_0
+
 <tf.Tensor 'up_sampling3d_1/concat_2:0' shape=(?, 128, 160, 160, 16) dtype=float32>
+
 Concatenate upsampled depth 0 with downsampled depth 0
 Now you'll apply a concatenation operation using the layers that are both at the same depth of 0.
 
@@ -180,6 +208,7 @@ print(down_depth_0_layer_1)
 Tensor("up_sampling3d_1/concat_2:0", shape=(?, 128, 160, 160, 16), dtype=float32)
 
 Tensor("activation_4/Relu:0", shape=(?, 64, 160, 160, 16), dtype=float32)
+
 Run the next cell to add a concatenation operation to your network
 
 # Add a concatenation along axis 1
@@ -187,52 +216,65 @@ up_depth_1_concat = concatenate([up_depth_0_layer_0,
                                  down_depth_0_layer_1],
                                 axis=1)
 up_depth_1_concat
+
 <tf.Tensor 'concatenate_1/concat:0' shape=(?, 192, 160, 160, 16) dtype=float32>
+
 Notice that the upsampling layer had 128 channels, and the down-convolution layer had 64 channels so that when concatenated, the result has 128 + 64 = 192 channels.
 
 Up-convolution layer 1
+
 The number of filters for this layer will be set to the number of channels in the down-convolution's layer 1 at the same depth of 0 (down_depth_0_layer_1).
 
 Run the next cell to have a look at the shape of the down-convolution depth 0 layer 1
 
 down_depth_0_layer_1
+
 <tf.Tensor 'activation_4/Relu:0' shape=(?, 64, 160, 160, 16) dtype=float32>
 Notice the number of channels for depth_0_layer_1 is 64
 
 print(f"number of filters: {down_depth_0_layer_1._keras_shape[1]}")
+
 number of filters: 64
+
 # Add a Conv3D up-convolution with 64 filters to your network
 up_depth_1_layer_1 = Conv3D(filters=64, 
                             kernel_size=(3,3,3),
                             padding='same',
                             strides=(1,1,1)
                            )(up_depth_1_concat)
+                           
 up_depth_1_layer_1 = Activation('relu')(up_depth_1_layer_1)
 up_depth_1_layer_1
+
 <tf.Tensor 'activation_7/Relu:0' shape=(?, 64, 160, 160, 16) dtype=float32>
-Up-convolution depth 0, layer 2
+
+**Up-convolution depth 0, layer 2**
 At layer 2 of depth 0 in the up-convolution the next step will be to add another up-convolution. The number of filters you'll want to use for this next up-convolution will need to be equal to the number of filters in the down-convolution depth 0 layer 1.
 
 Run the next cell to remind yourself of the number of filters in down-convolution depth 0 layer 1.
 
-print(down_depth_0_layer_1)
+_print(down_depth_0_layer_1)
 print(f"number of filters: {down_depth_0_layer_1._keras_shape[1]}")
 Tensor("activation_4/Relu:0", shape=(?, 64, 160, 160, 16), dtype=float32)
+
 number of filters: 64
+
 As you can see, the number of channels / filters in down_depth_0_layer_1 is 64.
 
 Run the next cell to add a Conv3D up-convolution with 64 filters to your network.
 
 # Add a Conv3D up-convolution with 64 filters to your network
-up_depth_1_layer_2 = Conv3D(filters=64, 
+_up_depth_1_layer_2 = Conv3D(filters=64, 
                             kernel_size=(3,3,3),
                             padding='same',
                             strides=(1,1,1)
                            )(up_depth_1_layer_1)
 up_depth_1_layer_2 = Activation('relu')(up_depth_1_layer_2)
 up_depth_1_layer_2
+
 <tf.Tensor 'activation_8/Relu:0' shape=(?, 64, 160, 160, 16) dtype=float32>
-Final Convolution
+**Final Convolution**
+
 For the final convolution, you will set the number of filters to be equal to the number of classes in your input data.
 
 In the assignment, you will be using data with 3 classes, namely:
