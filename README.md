@@ -14,7 +14,7 @@ As you can see from the diagram, this architecture features a series of down-con
 In this lab, you'll create a basic U-Net using Keras.
 
 # Import the elements you'll need to build your U-Net
-import keras
+_import keras
 from keras import backend as K
 from keras.engine import Input, Model
 from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, BatchNormalization, PReLU, Deconvolution3D
@@ -43,7 +43,7 @@ width: 160
 length: 16
 
 # Define an input layer tensor of the shape you'll use in the assignment
-_input_layer = Input(shape=(4, 160, 160, 16))
+input_layer = Input(shape=(4, 160, 160, 16))
 input_layer
 
 <tf.Tensor 'input_2:0' shape=(?, 4, 160, 160, 16) dtype=float32>
